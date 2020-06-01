@@ -58,6 +58,7 @@ void RectangleIntesector::visit(const Circle& c)
 {
 	auto isecor = c.getIntersector();
 	isecor->visit(_rect);
+	result = isecor->result;
 }
 
 void RectangleIntesector::visit(const Rectangle& r)
