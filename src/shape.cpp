@@ -1,7 +1,9 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 #include "shape.h"
+#include "GLUtility.h"
 using namespace geometry_2d;
+using Shader = ::Shader;
 
 const float Circle::PI = 3.1415926f;
 const float Shape::SCALE_FACTOR = 100.0f;
@@ -13,10 +15,51 @@ bool Intersect(const Shape* s1, const Shape* s2)
 	return (*sp).result;
 }
 
-void Shape::onDraw() const
+void Shape::onDrawSimpleElements() const
 {
-    glBindVertexArray(VAO);
+	if (_shader) {
+		_shader->use();
+		_shader->setVec3("center", 0.5f, 0.5f, 0.0f);
+	}
+	glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, static_cast<int>((getEdges() - 2) * 3), GL_UNSIGNED_INT, nullptr);
+}
+
+const std::shared_ptr<Shader>& Shape::getShader() const
+{
+	return _shader;
+}
+
+void Shape::setShader(const std::string vert, const std::string frag)
+{
+	_shader = std::make_shared<Shader>(vert.c_str(), frag.c_str());
+}
+
+void Shape::setShader(const Shape &s)
+{
+	_shader = std::make_shared<Shader>();
+	_shader->ID = s._shader->ID;
+}
+
+void Shape::setShader(const Shader &s)
+{
+	_shader = std::make_shared<Shader>();
+	_shader->ID = s.ID;
+}
+
+void geometry_2d::Shape::_updateBuffer()
+{
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, static_cast<long>(_vertices.size() * sizeof(float)),
+		_vertices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<long>(_indices.size() * sizeof(unsigned int)),
+		_indices.data(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void CircleIntersector::visit(const Circle& c)
@@ -56,6 +99,11 @@ Circle::Circle(float x, float y, float r):
 {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+	_indices = {
+		0, 1, 2,
+		0, 2, 3
+	};
     _updateVertices();
 }
 
@@ -76,12 +124,30 @@ bool Circle::intersectWithLine(const LineSegment& ls) const
 
 void Circle::draw() const
 {
+	if (!_shader) {
+		//sharing shader?
+		std::string path = __FILE__;
+		std::string shaderPath = path.substr(0, path.rfind('\\')) + "\\_shaders";
 
+		//std::cerr << "Shader must be set before draw circle" << std::endl;
+		return;
+	}
+	_shader->use();
+	_shader->setVec3("center", _center.x, _center.y, 0.0f);
+	_shader->setFloat("radius", _radius);
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
 void Circle::_updateVertices()
 {
-
+	_vertices = std::vector<float>{
+		_center.x - _radius, _center.y - _radius, 0.0f,
+		_center.x + _radius, _center.y - _radius, 0.0f,
+		_center.x + _radius, _center.y + _radius, 0.0f,
+		_center.x - _radius, _center.y + _radius, 0.0f,
+	};
+	_updateBuffer();
 }
 
 void RectangleIntesector::visit(const Circle& c)
@@ -118,6 +184,22 @@ void RectangleIntesector::visit(const Triangle& t)
 	}
 }
 
+Rectangle::Rectangle(float x1, float y1, float x2, float y2) :
+	_leftUp{ x1, y1 },
+	_rightDown{ x2, y2 }
+{
+	up = LineSegment(_leftUp, {_rightDown.x, _leftUp.y});
+	right = LineSegment({ _rightDown.x, _leftUp.y }, _rightDown);
+	bottom = LineSegment(_rightDown, { _leftUp.x, _rightDown.y });
+	left = LineSegment({ _leftUp.x, _rightDown.y }, _leftUp);
+	glGenBuffers(1, &VBO);
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &EBO);
+	_indices = { 0, 1, 2, 
+				 0, 2, 3};
+	_updateVertices();
+}
+
 bool Rectangle::intersectWithLine(const LineSegment& ln) const
 {
 	if (ln.horizontal()) {
@@ -137,12 +219,18 @@ bool Rectangle::intersectWithLine(const LineSegment& ln) const
 
 void Rectangle::draw() const
 {
-
+	onDrawSimpleElements();
 }
 
 void Rectangle::_updateVertices()
 {
-
+	_vertices = std::vector<float>({
+		_leftUp.x, _leftUp.y, 0.0f,
+		_rightDown.x, _leftUp.y, 0.0f,
+		_rightDown.x, _rightDown.y, 0.0f,
+		_leftUp.x, _rightDown.y, 0.0f
+	});
+	_updateBuffer();
 }
 
 void TriangleIntesector::visit(const Circle& c)
@@ -221,7 +309,7 @@ bool Triangle::intersectWithLine(const LineSegment& ln) const
 
 void Triangle::draw() const
 {
-    onDraw();
+	onDrawSimpleElements();
 }
 
 void Triangle::_updateVertices()
@@ -231,15 +319,5 @@ void Triangle::_updateVertices()
                                _point2.x, _point2.y, 0.0f,
                                _point3.x, _point3.y, 0.0f
                            });
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, static_cast<long>(_vertices.size() * sizeof(float)),
-                 _vertices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<long>(_indices.size() * sizeof(unsigned int)),
-                 _indices.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+	_updateBuffer();
 }

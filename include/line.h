@@ -49,6 +49,7 @@ namespace geometry_2d {
         float _B;
         float _C;
     public:
+        line() { }
         line(float a, float b, float c) :
             _A(a), _B(b), _C(c) {}
         line(const coordinate& p1, const coordinate& p2)
@@ -117,6 +118,7 @@ namespace geometry_2d {
         coordinate _endpoint1;
         coordinate _endpoint2;
     public:
+        LineSegment() { }
         LineSegment(float x1, float y1, float x2, float y2) :
             _endpoint1({ x1, y1 }), _endpoint2({ x2, y2 }), line(_endpoint1, _endpoint2) {}
         LineSegment(const coordinate& p1, const coordinate& p2) :

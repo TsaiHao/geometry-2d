@@ -4,9 +4,12 @@
 #include <memory>
 #include <vector>
 #include <math.h>
+#include <string>
 #include <limits.h>
 #include "line.h"
+#include "utilities.h"
 
+class Shader;
 namespace geometry_2d {
     // forward declaration
     class visitor;
@@ -25,18 +28,31 @@ namespace geometry_2d {
         virtual intersector* getIntersector() const = 0;
         virtual void draw() const = 0;
         virtual  unsigned int getEdges() const = 0;
+        const std::shared_ptr<Shader>& getShader() const;
+        
         virtual ~Shape() {}
 
     protected:
         virtual void _updateVertices() = 0;
-        virtual void onDraw() const;
+        virtual void _updateBuffer();
+        virtual void onDrawSimpleElements() const;
+		void setShader(const std::string vert, const std::string frag);
+		void setShader(const Shape& s);
+		void setShader(const Shader& s);
+        color::color_rgba _color;
         unsigned int VAO;
         unsigned int VBO;
         unsigned int EBO;
         std::vector<float> _vertices;
         std::vector<unsigned int> _indices;
+        std::shared_ptr<Shader> _shader;
         static const float SCALE_FACTOR;
+        static const std::shared_ptr<Shader> _circleShader;
+        static const std::shared_ptr<Shader> _rectangleShader;
+        static const std::shared_ptr<Shader> _triangleShader;
+
     };
+
     class visitor
     {
     public:
@@ -109,6 +125,7 @@ namespace geometry_2d {
         void visit(const Triangle& t) override;
     };
 
+    // only for parallel rectangle
     class Rectangle : public Shape
     {
         coordinate _leftUp;
@@ -118,10 +135,7 @@ namespace geometry_2d {
         LineSegment right;
         LineSegment bottom;
         LineSegment left;
-        Rectangle(float x1, float y1, float x2, float y2) :
-            _leftUp({ x1, y1 }), _rightDown({ x2, y2 }), up(x1, y1, x2, y1),
-            right(x2, y1, x2, y2), bottom(x1, y2, x2, y2), left(x1, y1, x1, y2)
-        {}
+        Rectangle(float x1, float y1, float x2, float y2);
         float getArea() const override
         {
             return (_leftUp.x - _rightDown.x) * (_leftUp.y - _rightDown.y);

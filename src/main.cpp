@@ -1,5 +1,5 @@
 #include <iostream>
-#include <windows.h>
+#include <string>
 #include "glad/glad.h"
 #include "GLUtility.h"
 #include "utilities.h"
@@ -14,19 +14,17 @@ int main()
 
     geometry_2d::Triangle triangle(0.0f, 0.1f, -0.1f, -0.1f, 0.1f, -0.1f),
             triangle2(-0.5f, -0.3f, -0.4f, 0.0f, -0.2f, -0.5f);
-
-
-
-    Shader shader("C:\\Users\\Admin\\source\\repos\\geometry-2d-master\\geometry_2d\\src\\_shaders\\vertex.vert",
-                  "C:\\Users\\Admin\\source\\repos\\geometry-2d-master\\geometry_2d\\src\\_shaders\\fragment.frag");
+    geometry_2d::Rectangle rec(0.1f, 0.9f, 0.9f, 0.1f);
+    geometry_2d::Circle circle(0.5f, -0.75f, 0.2f);
 
     while (!glfwWindowShouldClose(window)) {
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shader.use();
         triangle.draw();
         triangle2.draw();
+        rec.draw();
+        circle.draw();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
