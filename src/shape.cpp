@@ -105,6 +105,7 @@ Circle::Circle(float x, float y, float r):
 		0, 2, 3
 	};
     _updateVertices();
+	_shader = std::make_shared<Shader>("shaders/vertex2.vert", "shaders/fragment_circle.frag");
 }
 
 bool Circle::intersectWithLine(const LineSegment& ls) const
@@ -125,10 +126,6 @@ bool Circle::intersectWithLine(const LineSegment& ls) const
 void Circle::draw() const
 {
 	if (!_shader) {
-		//sharing shader?
-		std::string path = __FILE__;
-		std::string shaderPath = path.substr(0, path.rfind('\\')) + "\\_shaders";
-
 		//std::cerr << "Shader must be set before draw circle" << std::endl;
 		return;
 	}
@@ -197,6 +194,7 @@ Rectangle::Rectangle(float x1, float y1, float x2, float y2) :
 	glGenBuffers(1, &EBO);
 	_indices = { 0, 1, 2, 
 				 0, 2, 3};
+	_shader = std::make_shared<Shader>("shaders/vertex.vert", "shaders/fragment.frag");
 	_updateVertices();
 }
 
@@ -272,6 +270,7 @@ Triangle::Triangle(float x1, float y1, float x2, float y2, float x3, float y3) :
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
     _indices = {0, 1, 2};
+	_shader = std::make_shared<Shader>("shaders/vertex.vert", "shaders/fragment.frag");
     _updateVertices();
 }
 
