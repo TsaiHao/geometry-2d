@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.2)
+project(geometry_2d)
+
+#add_subdirectory(glfw)
+set(GEOMETRY_EXECUTABLE_NAME geo_test)
+set(GLFW_INCLUDE_DIR glfw/include)
+set(GEOMETRY_SHAPE_DIR geometry_2d/shape)
+set(GEOMETRY_EXECUTABLE_MAIN main.cpp)
+set(GEOMETRY_SHAPE_LIB shape2d)
+
+include_directories(${GLFW_INCLUDE_DIR} )
+aux_source_directory(${GEOMETRY_SHAPE_DIR} SHAPE2D_LIB)
+add_library(${GEOMETRY_SHAPE_LIB} STATIC ${SHAPE2D_LIB})
+add_executable(${GEOMETRY_EXECUTABLE_NAME} ${GEOMETRY_EXECUTABLE_MAIN})
+target_link_libraries(${GEOMETRY_EXECUTABLE_NAME} PRIVATE ${GEOMETRY_SHAPE_LIB})

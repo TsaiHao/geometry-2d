@@ -30,7 +30,6 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
-out/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
@@ -350,5 +349,6 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+cmake-build-debug
+.vcxproj*
 .idea
-cmake-build-*
